@@ -167,6 +167,6 @@ app.post("/api/deposit", requireAuth, (req, res) => res.status(403).json({ error
 app.post("/api/withdraw", requireAuth, (req, res) => res.status(403).json({ error: "Withdrawals are disabled in this development environment." }));
 app.post("/api/order", requireAuth, (req, res) => res.status(403).json({ error: "Live trading is disabled in this development environment." }));
 
-app.get("*", (req, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
+app.get('/{*splat}', (req, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
 
 app.listen(PORT, () => console.log(`Virexa Markets V6 listening on ${PORT}`));
