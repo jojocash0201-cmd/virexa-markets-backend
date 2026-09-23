@@ -83,7 +83,151 @@ footer{border-top:1px solid var(--line);padding:32px 0;color:var(--muted);font-s
 
 <footer><div class="wrap foot"><div>© 2026 Virexa Markets. Platform concept / development environment.</div><div><a href="#faq">FAQ</a> · <a href="#why">Security</a> · <a href="#accounts">Accounts</a></div></div></footer>
 
-<div class="modal" id="login"><div class="box"><button class="close" onclick="closeM()">×</button><h2>Welcome back</h2><p class="small">Client login preview. Connect this form to the full-stack authentication service before production use.</p><div class="field"><label>Email</label><input type="email" placeholder="you@example.com"></div><div class="field"><label>Password</label><input type="password" placeholder="••••••••"></div><button class="btn primary" onclick="alert('Login is currently a preview feature. Connect the full-stack client portal for real authentication.')">Log in</button></div></div>
+<div class="modal" id="login">
+  <div class="box">
+    <button class="close" onclick="closeM()">×</button>
+    <h2>Welcome back</h2>
+    <p class="small">Log in to your Virexa Markets account.</p>
+
+    <form id="loginForm">
+      <div class="field">
+        <label>Email</label>
+        <input id="loginEmail" type="email" placeholder="you@example.com" required>
+      </div>
+
+      <div class="field">
+        <label>Password</label>
+        <input id="loginPassword" type="password" placeholder="Your password" required>
+      </div>
+
+      <button class="btn primary" type="submit">Log in</button>
+    </form>
+  </div>
+</div>
+
+<div class="modal" id="signup">
+  <div class="box">
+    <button class="close" onclick="closeM()">×</button>
+    <h2>Create your Virexa account</h2>
+    <p class="small">Create a preview client account.</p>
+
+    <form id="signupForm">
+      <div class="field">
+        <label>Full name</label>
+        <input id="signupName" type="text" placeholder="Your full name" required>
+      </div>
+
+      <div class="field">
+        <label>Email</label>
+        <input id="signupEmail" type="email" placeholder="you@example.com" required>
+      </div>
+
+      <div class="field">
+        <label>Password</label>
+        <input id="signupPassword" type="password" placeholder="Create a strong password" minlength="10" required>
+      </div>
+
+      <button class="btn primary" type="submit">Create account</button>
+    </form>
+  </div>
+</div>
+
+<script>
+function openM(id){
+  document.getElementById(id).classList.add('show');
+}
+
+function closeM(){
+  document.querySelectorAll('.modal').forEach(x =>
+    x.classList.remove('show')
+  );
+}
+
+document.querySelectorAll('.modal').forEach(x =>
+  x.addEventListener('click', e => {
+    if(e.target === x) x.classList.remove('show');
+  })
+);
+
+/* REAL REGISTRATION */
+document.getElementById('signupForm').addEventListener('submit', async function(e){
+  e.preventDefault();
+
+  const name = document.getElementById('signupName').value.trim();
+  const email = document.getElementById('signupEmail').value.trim();
+  const password = document.getElementById('signupPassword').value;
+
+  try {
+    const response = await fetch('/api/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        name,
+        email,
+        password
+      })
+    });
+
+    const data = await response.json();
+
+    if(!response.ok){
+      alert(data.error || 'Registration failed.');
+      return;
+    }
+
+    alert('Account created successfully! Welcome to Virexa Markets.');
+
+    closeM();
+
+    window.location.reload();
+
+  } catch(error) {
+    alert('Could not connect to the server. Please try again.');
+  }
+});
+
+/* REAL LOGIN */
+document.getElementById('loginForm').addEventListener('submit', async function(e){
+  e.preventDefault();
+
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+
+  try {
+    const response = await fetch('/api/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        email,
+        password
+      })
+    });
+
+    const data = await response.json();
+
+    if(!response.ok){
+      alert(data.error || 'Login failed.');
+      return;
+    }
+
+    alert('Login successful! Welcome back.');
+
+    closeM();
+
+    window.location.reload();
+
+  } catch(error) {
+    alert('Could not connect to the server. Please try again.');
+  }
+});
+</script>
+
+</body>
+</html>
 <div class="modal" id="signup"><div class="box"><button class="close" onclick="closeM()">×</button><h2>Create your Virexa account</h2><p class="small">Preview registration form. Real-money onboarding is not enabled.</p><div class="field"><label>Full name</label><input type="text" placeholder="Your full name"></div><div class="field"><label>Email</label><input type="email" placeholder="you@example.com"></div><div class="field"><label>Password</label><input type="password" placeholder="Create a strong password"></div><button class="btn primary" onclick="alert('Preview registration submitted. Production onboarding will be connected after compliance and backend setup.')">Create account</button></div></div>
 <script>
 function openM(id){document.getElementById(id).classList.add('show')}
