@@ -109,7 +109,7 @@ footer{border-top:1px solid var(--line);padding:32px 0;color:var(--muted);font-s
   <div class="box">
     <button class="close" onclick="closeM()">×</button>
     <h2>Create your Virexa account</h2>
-    <p class="small">Create a preview client account.</p>
+    <p class="small">Create your Virexa Markets client account.</p>
 
     <form id="signupForm">
       <div class="field">
@@ -132,6 +132,63 @@ footer{border-top:1px solid var(--line);padding:32px 0;color:var(--muted);font-s
   </div>
 </div>
 
+<div id="clientDashboard" style="display:none;">
+  <section>
+    <div class="wrap">
+      <div class="head">
+        <h2>Client Dashboard</h2>
+        <p id="welcomeText">Welcome back.</p>
+      </div>
+
+      <div class="grid4">
+        <div class="card">
+          <span class="pill">BALANCE</span>
+          <h3 id="dashBalance">$0.00</h3>
+          <p>Available account balance</p>
+        </div>
+
+        <div class="card">
+          <span class="pill">EQUITY</span>
+          <h3 id="dashEquity">$0.00</h3>
+          <p>Current account equity</p>
+        </div>
+
+        <div class="card">
+          <span class="pill">KYC</span>
+          <h3 id="dashKyc">Pending</h3>
+          <p>Verification status</p>
+        </div>
+
+        <div class="card">
+          <span class="pill">ACCOUNT</span>
+          <h3 id="dashAccount">Client</h3>
+          <p>Account type</p>
+        </div>
+      </div>
+
+      <div class="banner" style="margin-top:25px;">
+        <div>
+          <h2>Trading Lab</h2>
+          <p>Demo trading will be available here. Live trading is currently disabled.</p>
+        </div>
+        <span class="pill">DEMO ONLY</span>
+      </div>
+
+      <div class="card" style="margin-top:20px;">
+        <div class="row">
+          <h3>Recent Activity</h3>
+          <button class="btn ghost" onclick="loadDashboard()">Refresh</button>
+        </div>
+        <div id="transactions">
+          <p class="muted">No transactions yet.</p>
+        </div>
+      </div>
+
+      <button class="btn" style="margin-top:20px;" onclick="logout()">Log out</button>
+    </div>
+  </section>
+</div>
+
 <script>
 function openM(id){
   document.getElementById(id).classList.add('show');
@@ -149,7 +206,7 @@ document.querySelectorAll('.modal').forEach(x =>
   })
 );
 
-/* REAL REGISTRATION */
+/* REGISTER */
 document.getElementById('signupForm').addEventListener('submit', async function(e){
   e.preventDefault();
 
@@ -160,14 +217,8 @@ document.getElementById('signupForm').addEventListener('submit', async function(
   try {
     const response = await fetch('/api/register', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        name,
-        email,
-        password
-      })
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({name, email, password})
     });
 
     const data = await response.json();
@@ -177,18 +228,15 @@ document.getElementById('signupForm').addEventListener('submit', async function(
       return;
     }
 
-    alert('Account created successfully! Welcome to Virexa Markets.');
-
     closeM();
-
-    window.location.reload();
+    showDashboard(data.user);
 
   } catch(error) {
-    alert('Could not connect to the server. Please try again.');
+    alert('Could not connect to the server.');
   }
 });
 
-/* REAL LOGIN */
+/* LOGIN */
 document.getElementById('loginForm').addEventListener('submit', async function(e){
   e.preventDefault();
 
@@ -198,13 +246,8 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
   try {
     const response = await fetch('/api/login', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        email,
-        password
-      })
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({email, password})
     });
 
     const data = await response.json();
@@ -214,16 +257,102 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
       return;
     }
 
-    alert('Login successful! Welcome back.');
-
     closeM();
-
-    window.location.reload();
+    showDashboard(data.user);
 
   } catch(error) {
-    alert('Could not connect to the server. Please try again.');
+    alert('Could not connect to the server.');
   }
 });
+
+/* SHOW DASHBOARD */
+function showDashboard(user){
+  document.querySelector('main').style.display = 'none';
+  document.querySelector('footer').style.display = 'none';
+  document.getElementById('clientDashboard').style.display = 'block';
+
+  document.querySelector('header').style.display = 'none';
+
+  document.getElementById('welcomeText').textContent =
+    'Welcome back, ' + user.name + '.';
+
+  document.getElementById('dashKyc').textContent =
+    user.kyc || 'pending';
+
+  loadDashboard();
+}
+
+/* LOAD ACCOUNT DATA */
+async function loadDashboard(){
+  try {
+    const meResponse = await fetch('/api/me');
+
+    if(!meResponse.ok){
+      return;
+    }
+
+    const user = await meResponse.json();
+
+    document.getElementById('welcomeText').textContent =
+      'Welcome back, ' + user.name + '.';
+
+    document.getElementById('dashBalance').textContent =
+      '$' + Number(user.balance || 0).toFixed(2);
+
+    document.getElementById('dashEquity').textContent =
+      '$' + Number(user.equity || 0).toFixed(2);
+
+    document.getElementById('dashKyc').textContent =
+      user.kyc || 'pending';
+
+    const txResponse = await fetch('/api/transactions');
+
+    if(txResponse.ok){
+      const transactions = await txResponse.json();
+
+      const box = document.getElementById('transactions');
+
+      if(!transactions.length){
+        box.innerHTML = '<p class="muted">No transactions yet.</p>';
+      } else {
+        box.innerHTML = transactions.map(t =>
+          '<div style="padding:10px 0;border-bottom:1px solid #1b3653;">' +
+          '<strong>' + (t.type || 'Activity') + '</strong>' +
+          '<div class="muted">' + (t.amount || '') + '</div>' +
+          '</div>'
+        ).join('');
+      }
+    }
+
+  } catch(error) {
+    console.log('Dashboard loading error:', error);
+  }
+}
+
+/* LOGOUT */
+async function logout(){
+  try {
+    await fetch('/api/logout', {
+      method: 'POST'
+    });
+  } finally {
+    location.reload();
+  }
+}
+
+/* CHECK EXISTING LOGIN SESSION */
+(async function(){
+  try {
+    const response = await fetch('/api/me');
+
+    if(response.ok){
+      const user = await response.json();
+      showDashboard(user);
+    }
+  } catch(error) {
+    console.log('No active session.');
+  }
+})();
 </script>
 
 </body>
